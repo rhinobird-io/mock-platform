@@ -81,7 +81,10 @@ func main() {
 	}, *maxConnections)
 	defer redisPool.Close()
 
-	file, _ := os.Open("plugins.json")
+	file, er := os.Open("plugins.json")
+	if er != nil {
+		log.Fatal(er)
+	}
 	decoder := json.NewDecoder(file)
 	plugins := map[string]int{}
 	err := decoder.Decode(&plugins)
