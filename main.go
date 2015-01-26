@@ -2,16 +2,31 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
-	"github.com/garyburd/redigo/redis"
+	"github.com/streamrail/concurrent-map"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
 )
 
-func handler(plugins map[string]int, pool *redis.Pool) http.HandlerFunc {
+var tokens = cmap.New()
+
+func getAuth(token string) (string, bool) {
+	tmp, ok := tokens.Get(token)
+	if ok {
+		userId := tmp.(string)
+		return userId, ok
+	} else {
+		return "", ok
+	}
+}
+
+func setAuth(token string, userId string) {
+	tokens.Set(token, userId)
+}
+
+func handler(plugins map[string]int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reg := regexp.MustCompile(`/([^/]+)(/.*)`)
 		result := reg.FindStringSubmatch(r.RequestURI)
@@ -23,19 +38,17 @@ func handler(plugins map[string]int, pool *redis.Pool) http.HandlerFunc {
 		tailingPath := result[2]
 		if port, ok := plugins[subPath]; ok {
 			if subPath != "platform" {
-				conn := pool.Get()
-				defer conn.Close()
 				cookie, err := r.Cookie("Auth")
 				if err != nil {
 					w.WriteHeader(401)
 					return
 				}
-				value, err := redis.String(conn.Do("GET", cookie.Value))
-				if err != nil {
+				value, ok := getAuth(cookie.Value)
+				if ok {
+					r.Header.Set("USER", value)
+				} else {
 					w.WriteHeader(401)
 					return
-				} else {
-					r.Header.Set("USER", value)
 				}
 			}
 			client := &http.Client{}
@@ -59,28 +72,35 @@ func handler(plugins map[string]int, pool *redis.Pool) http.HandlerFunc {
 	}
 }
 
-var (
-	redisAddress   = flag.String("redis-address", ":6379", "Address to the Redis server")
-	maxConnections = flag.Int("max-connections", 10, "Max connections to Redis")
-)
+type authentication struct {
+	Token  string
+	UserId string
+}
+
+func auth() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			decoder := json.NewDecoder(r.Body)
+			var authInfo authentication
+			err := decoder.Decode(authInfo)
+			if err != nil {
+				w.WriteHeader(400)
+				return
+			} else {
+				setAuth(authInfo.Token, authInfo.UserId)
+				if err != nil {
+					w.WriteHeader(401)
+					return
+				} else {
+					w.WriteHeader(200)
+					return
+				}
+			}
+		}
+	}
+}
 
 func main() {
-	flag.Parse()
-
-	log.Printf("Will connect redis server: %s", *redisAddress)
-	log.Printf("Max connections: %d", *maxConnections)
-	redisPool := redis.NewPool(func() (redis.Conn, error) {
-		c, err := redis.Dial("tcp", *redisAddress)
-
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-
-		return c, err
-	}, *maxConnections)
-	defer redisPool.Close()
-
 	file, er := os.Open("plugins.json")
 	if er != nil {
 		log.Fatal(er)
@@ -91,6 +111,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	http.HandleFunc("/", handler(plugins, redisPool))
+	http.HandleFunc("/auth", auth())
+	http.HandleFunc("/", handler(plugins))
 	http.ListenAndServe(":8000", nil)
 }
