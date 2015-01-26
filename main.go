@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/streamrail/concurrent-map"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -63,7 +64,11 @@ func handler(plugins map[string]int) http.HandlerFunc {
 				w.WriteHeader(502)
 				return
 			}
-			resp.Write(w)
+			for k, v := range resp.Header {
+				w.Header().Set(k, v[0])
+			}
+			w.WriteHeader(resp.StatusCode)
+			io.Copy(w, resp.Body)
 			return
 		} else {
 			w.WriteHeader(404)
