@@ -39,16 +39,23 @@ func handler(plugins map[string]int) http.HandlerFunc {
 		tailingPath := result[2]
 		if port, ok := plugins[subPath]; ok {
 			cookie, err := r.Cookie("Auth")
+			flag := true
 			if err != nil {
-				w.WriteHeader(401)
-				return
+				if subPath != "platform" {
+					w.WriteHeader(401)
+					return
+				} else {
+					flag = false
+				}
 			}
-			value, ok := getAuth(cookie.Value)
-			if ok {
-				r.Header.Set("USER", value)
-			} else if subPath != "platform" {
-				w.WriteHeader(401)
-				return
+			if flag {
+				value, ok := getAuth(cookie.Value)
+				if ok {
+					r.Header.Set("USER", value)
+				} else if subPath != "platform" {
+					w.WriteHeader(401)
+					return
+				}
 			}
 			client := &http.Client{}
 			r.RequestURI = ""
