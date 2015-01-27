@@ -29,6 +29,7 @@ func setAuth(token string, userId string) {
 
 func handler(plugins map[string]int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("In: %s", r.RequestURI)
 		reg := regexp.MustCompile(`/([^/]+)(/.*)`)
 		result := reg.FindStringSubmatch(r.RequestURI)
 		if len(result) < 3 {
@@ -42,6 +43,7 @@ func handler(plugins map[string]int) http.HandlerFunc {
 			flag := true
 			if err != nil {
 				if subPath != "platform" {
+					log.Printf("Auth fail")
 					w.WriteHeader(401)
 					return
 				} else {
@@ -51,8 +53,10 @@ func handler(plugins map[string]int) http.HandlerFunc {
 			if flag {
 				value, ok := getAuth(cookie.Value)
 				if ok {
+					log.Printf("Auth user set")
 					r.Header.Set("USER", value)
 				} else if subPath != "platform" {
+					log.Printf("Auth fail")
 					w.WriteHeader(401)
 					return
 				}
@@ -63,6 +67,7 @@ func handler(plugins map[string]int) http.HandlerFunc {
 			r.URL.Scheme = "http"
 			r.URL.Host = r.Host
 			r.URL.Path = tailingPath
+			log.Printf("Out: %s", r.URL.String())
 			resp, err := client.Do(r)
 			if err != nil {
 				log.Println(err)
