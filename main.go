@@ -31,11 +31,11 @@ func handler(plugins map[string]int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("In: %s", r.RequestURI)
 		reg := regexp.MustCompile(`/([^/]+)(/.*)`)
-		result := reg.FindStringSubmatch(r.RequestURI)
+		result := reg.FindStringSubmatch(r.URL.Path)
 		if len(result) < 3 && r.RequestURI == "/" {
-				http.Redirect(w, r, r.URL.Host +  "/platform/", 301)
-				return
-			}
+			http.Redirect(w, r, r.URL.Host +  "/platform/", 301)
+			return
+		}
 		if len(result) < 3 {
 			w.WriteHeader(404)
 			return
@@ -57,7 +57,6 @@ func handler(plugins map[string]int) http.HandlerFunc {
 			if flag {
 				value, ok := getAuth(cookie.Value)
 				if ok {
-					log.Printf("Auth user set")
 					r.Header.Set("USER", value)
 				} else if subPath != "platform" {
 					log.Printf("Auth fail")
