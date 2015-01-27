@@ -32,8 +32,12 @@ func handler(plugins map[string]int) http.HandlerFunc {
 		log.Printf("In: %s", r.RequestURI)
 		reg := regexp.MustCompile(`/([^/]+)(/.*)`)
 		result := reg.FindStringSubmatch(r.RequestURI)
+		if len(result) < 3 && r.RequestURI == "/" {
+				http.Redirect(w, r, r.URL.Host +  "/platform/", 301)
+				return
+			}
 		if len(result) < 3 {
-			http.Redirect(w, r, r.URL.Host +  "/platform/login", 301)
+			w.WriteHeader(404)
 			return
 		}
 		subPath := result[1]
