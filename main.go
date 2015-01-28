@@ -33,7 +33,7 @@ func handler(plugins map[string]int) http.HandlerFunc {
 		reg := regexp.MustCompile(`/([^/]+)(/.*)`)
 		result := reg.FindStringSubmatch(r.URL.Path)
 		if len(result) < 3 && r.RequestURI == "/" {
-			http.Redirect(w, r, r.URL.Host +  "/platform/", 301)
+			http.Redirect(w, r, r.URL.Host+"/platform/", 301)
 			return
 		}
 		if len(result) < 3 {
