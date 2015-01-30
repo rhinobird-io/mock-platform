@@ -61,7 +61,7 @@ func handler(plugins map[string]int) http.HandlerFunc {
 			if flag {
 				value, ok := getAuth(cookie.Value)
 				if ok {
-					r.Header.Set("USER", value)
+					r.Header.Set("X-USER", value)
 				} else if subPath != "platform" {
 					log.Printf("Auth fail")
 					w.WriteHeader(401)
