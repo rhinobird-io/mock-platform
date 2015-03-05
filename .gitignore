@@ -2,3 +2,6 @@
 *.iml
 plugins.json
 gateway
+.cache/
+.config/
+docker/platform/repo
