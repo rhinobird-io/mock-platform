@@ -5,3 +5,4 @@ gateway
 .cache/
 .config/
 docker/platform/repo
+.env
