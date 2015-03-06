@@ -1,10 +1,12 @@
 ## mock-platform
 
-Define platform, plugin running host and port in `plugins.json`, run gateway.
+### Prerequisite
 
-Make sure platform login function uses the auth URL of this mock gateway, http://hostname:8080/auth.
+* Docker
+* Define platform, plugin running host and port in `plugins.json`.
+* Set environment variables such as GITLAB_PRIVATE_TOKEN in `.env`.
 
-Download executable gateway from issue #2.
+You can get the gitlab private token from gitlab profile account setting.
 
 ### Start gateway and platform
 
