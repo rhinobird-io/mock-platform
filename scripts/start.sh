@@ -17,8 +17,8 @@ echo -e "Starting ${GW_NAME}..."
 DEBIAN_IMAGE="debian:wheezy" && sudo docker history $DEBIAN_IMAGE > /dev/null || sudo docker pull $DEBIAN_IMAGE
 sudo docker inspect $GW_NAME >/dev/null && sudo docker rm -f $GW_NAME > /dev/null || true
 curl -o "${HOME}/gateway" "${GATEWAY_BIN}?private_token=${GITLAB_PRIVATE_TOKEN}"
-sudo docker run -d --name $GW_NAME -v "$HOME":/gateway -w /gateway -p 8000:8000 $DEBIAN_IMAGE chmod +x ./gateway && ./gateway
-export GW_ADDR=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${GW_NAME})
+sudo docker run -d --name $GW_NAME -v "$HOME":/gateway -w /gateway -p 8000:8000 $DEBIAN_IMAGE sh -c 'chmod +x ./gateway && ./gateway'
+export GW_ADDR=$(sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${GW_NAME})
 
 echo -e "Starting ${PLAT_NAME}..."
 
