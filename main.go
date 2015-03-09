@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -10,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"strconv"
 
 	"github.com/streamrail/concurrent-map"
 )
@@ -30,7 +30,7 @@ func setAuth(token string, userId string) {
 	tokens.Set(token, userId)
 }
 
-func handler(plugins map[string]int) http.HandlerFunc {
+func handler(plugins map[string]string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("In: %s", r.RequestURI)
 		reg := regexp.MustCompile(`/([^/]+)(/.*)`)
@@ -46,7 +46,7 @@ func handler(plugins map[string]int) http.HandlerFunc {
 
 		subPath := result[1]
 		tailingPath := result[2]
-		if port, ok := plugins[subPath]; ok {
+		if host, ok := plugins[subPath]; ok {
 			cookie, err := r.Cookie("Auth")
 			flag := true
 			if err != nil {
@@ -70,13 +70,15 @@ func handler(plugins map[string]int) http.HandlerFunc {
 			}
 
 			r.RequestURI = ""
-			r.Host = fmt.Sprintf("localhost:%d", port)
+			r.Host = host
 			r.URL.Scheme = "http"
 			r.URL.Host = r.Host
 			r.URL.Path = tailingPath
 			log.Printf("Out: %s", r.URL.String())
+			_, portStr, _ := net.SplitHostPort(host)
+			port, err := strconv.Atoi(portStr)
 			if isWebSocket(r) {
-				websocketProxy(w, r, port)
+				websocketProxy(w, r, host)
 			} else {
 				httpProxy(w, r, port)
 			}
@@ -112,7 +114,7 @@ func isWebSocket(r *http.Request) bool {
 	return false
 }
 
-func websocketProxy(w http.ResponseWriter, r *http.Request, port int) {
+func websocketProxy(w http.ResponseWriter, r *http.Request, host string) {
 	hj, ok := w.(http.Hijacker)
 	if !ok {
 		log.Print("Not support hijacker")
@@ -125,7 +127,7 @@ func websocketProxy(w http.ResponseWriter, r *http.Request, port int) {
 	}
 	defer connToClient.Close()
 
-	connToPlugin, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", port))
+	connToPlugin, err := net.Dial("tcp", host)
 	if err != nil {
 		log.Println(err)
 		return
@@ -177,7 +179,7 @@ func main() {
 		log.Fatal(err)
 	}
 	decoder := json.NewDecoder(file)
-	plugins := map[string]int{}
+	plugins := map[string]string{}
 	err = decoder.Decode(&plugins)
 	if err != nil {
 		log.Fatal(err)
