@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -79,7 +78,7 @@ func handler(plugins map[string]string) http.HandlerFunc {
 			_, portStr, _ := net.SplitHostPort(host)
 			port, err := strconv.Atoi(portStr)
 			if isWebSocket(r) {
-				websocketProxy(w, r, port)
+				websocketProxy(w, r, host)
 			} else {
 				httpProxy(w, r, port)
 			}
@@ -115,7 +114,7 @@ func isWebSocket(r *http.Request) bool {
 	return false
 }
 
-func websocketProxy(w http.ResponseWriter, r *http.Request, port int) {
+func websocketProxy(w http.ResponseWriter, r *http.Request, host string) {
 	hj, ok := w.(http.Hijacker)
 	if !ok {
 		log.Print("Not support hijacker")
@@ -128,7 +127,7 @@ func websocketProxy(w http.ResponseWriter, r *http.Request, port int) {
 	}
 	defer connToClient.Close()
 
-	connToPlugin, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", port))
+	connToPlugin, err := net.Dial("tcp", host)
 	if err != nil {
 		log.Println(err)
 		return
