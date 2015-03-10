@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/streamrail/concurrent-map"
+	"github.com/go-fsnotify/fsnotify"
 )
 
 var tokens = cmap.New()
@@ -173,18 +174,54 @@ func auth() http.HandlerFunc {
 	}
 }
 
-func main() {
+func loadConfig(plugins map[string]string) {
 	file, err := os.Open("plugins.json")
 	if err != nil {
 		log.Fatal(err)
 	}
 	decoder := json.NewDecoder(file)
-	plugins := map[string]string{}
 	err = decoder.Decode(&plugins)
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func main() {
+	plugins := map[string]string{}
+	loadConfig(plugins)
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	//done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case event := <-watcher.Events:
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					if (event.Name == "./plugins.json") {
+						log.Println("The config plugins.json changed")
+						loadConfig(plugins)
+					}
+				}
+			case err := <-watcher.Errors:
+				log.Println("error:", err)
+			}
+		}
+	}()
+	err = watcher.Add("./")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	http.HandleFunc("/auth", auth())
 	http.HandleFunc("/", handler(plugins))
+
+	log.Println("Listening on 8000")
 	http.ListenAndServe(":8000", nil)
+	//<-done
+
 }

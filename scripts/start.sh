@@ -9,7 +9,7 @@ export GW_NAME="tw-gateway"
 export PLAT_NAME="tw-platform"
 export PLATFORM_REPO=${PLATFORM_REPO:-"http://gitlab.ate-sh.worksdev/team-work/team-work.git"}
 export PLATFORM_DIR=${HOME}/docker/platform/repo
-export GATEWAY_BIN=${GATEWAY_BIN:-"http://gitlab.ate-sh.worksdev/files/note/1382/gateway"}
+export GATEWAY_BIN=${GATEWAY_BIN:-"http://gitlab.ate-sh.worksdev/files/note/1458/gateway"}
 export GITLAB_PRIVATE_TOKEN=${GITLAB_PRIVATE_TOKEN:-"xxxxxx"}
 
 echo -e "Starting ${GW_NAME}..."
