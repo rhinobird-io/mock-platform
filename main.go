@@ -196,7 +196,6 @@ func main() {
 	}
 	defer watcher.Close()
 
-	//done := make(chan bool)
 	go func() {
 		for {
 			select {
@@ -222,6 +221,4 @@ func main() {
 
 	log.Println("Listening on 8000")
 	http.ListenAndServe(":8000", nil)
-	//<-done
-
 }
