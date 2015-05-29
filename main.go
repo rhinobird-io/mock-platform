@@ -101,7 +101,24 @@ func httpProxy(w http.ResponseWriter, r *http.Request, port int) {
 		w.Header().Set(k, v[0])
 	}
 	w.WriteHeader(resp.StatusCode)
-	io.Copy(w, resp.Body)
+	if r.Header.Get("Accept") == "text/event-stream" {
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+			return
+		}
+		for {
+			buffer := make([]byte, 100000)
+            cBytes, err := resp.Body.Read(buffer)
+            if err == io.EOF {
+                    break
+            }
+			w.Write(buffer[0:cBytes])
+			flusher.Flush()
+		}
+	} else {
+		io.Copy(w, resp.Body)
+    }
 }
 
 func isWebSocket(r *http.Request) bool {
