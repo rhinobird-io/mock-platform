@@ -1,5 +1,12 @@
 ## mock-platform
 
+### Gateway only
+
+If you want to use the mock-gateway only, download the [latest release](https://github.com/rhinobird-io/mock-platform/releases) of the binary and run it.
+
+Then put `plugins.json` aside the binary file, following the format of the [sample file](https://github.com/rhinobird-io/mock-platform/blob/master/plugins.json.sample)
+
+
 ### Prerequisite
 
 * Docker
@@ -34,4 +41,4 @@ cd scripts
 
 ### Reference
 
-+ [Google Groups] (https://groups.google.com/forum/#!topic/golang-nuts/KBx9pDlvFOc)
++ [Google Groups - How to proxy Websocket in Golang] (https://groups.google.com/forum/#!topic/golang-nuts/KBx9pDlvFOc)
